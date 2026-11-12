@@ -1,0 +1,3 @@
+# The pipeline, tests and map server use the Python standard library only.
+# Needed only to download real county layers with pipeline/fetch_parcels.py:
+requests>=2.31

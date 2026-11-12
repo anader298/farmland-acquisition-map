@@ -1,0 +1,79 @@
+[
+ {
+  "county": "Example",
+  "state": "Illinois",
+  "synthetic": true,
+  "rest_url": "https://gis.example-county.example/arcgis/rest/services/Parcels/MapServer",
+  "layer_id": 0,
+  "feature_count": 598,
+  "free": true,
+  "license": "synthetic sample",
+  "neighbors": [
+   "Sample"
+  ],
+  "pin_field": "PIN",
+  "owner_field": "Owner",
+  "acres_field": "CalcAcres",
+  "class_field": "PropClass",
+  "mail_addr_field": "MailAddr",
+  "mail_city_field": "MailCity",
+  "mail_state_field": "MailState",
+  "mail_zip_field": "MailZip"
+ },
+ {
+  "county": "Sample",
+  "state": "Illinois",
+  "synthetic": true,
+  "rest_url": "https://gis.sample-county.example/arcgis/rest/services/Parcels/MapServer",
+  "layer_id": 0,
+  "feature_count": 647,
+  "free": true,
+  "license": "synthetic sample",
+  "neighbors": [
+   "Example",
+   "Demo"
+  ],
+  "pin_field": "PARCEL_ID",
+  "owner_field": "OWNER_NAME",
+  "acres_field": "ACRES",
+  "class_field": "CLASS",
+  "mail_addr_field": "MAIL_ADDR",
+  "mail_city_field": "MAIL_CITY",
+  "mail_state_field": "MAIL_ST",
+  "mail_zip_field": "MAIL_ZIP"
+ },
+ {
+  "county": "Demo",
+  "state": "Illinois",
+  "synthetic": true,
+  "rest_url": "https://gis.demo-county.example/arcgis/rest/services/Parcels/MapServer",
+  "layer_id": 0,
+  "feature_count": 646,
+  "free": true,
+  "license": "synthetic sample",
+  "neighbors": [
+   "Sample"
+  ],
+  "pin_field": "parcel_no",
+  "owner_concat": [
+   [
+    "own_last",
+    "own_first",
+    "own_mid"
+   ],
+   [
+    "own_entity"
+   ]
+  ],
+  "acres_field": "gis_acres",
+  "class_field": "tax_class",
+  "farm_class_values": [
+   "FARMLAND",
+   "AG LAND"
+  ],
+  "mail_addr_field": "mail1",
+  "mail_city_field": "mail_city",
+  "mail_state_field": "mail_state",
+  "mail_zip_field": "mail_zip"
+ }
+]

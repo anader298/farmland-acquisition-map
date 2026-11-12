@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Farmland acquisition map (synthetic sample)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+  :root{
+    --bg:#11130f; --panel:#1b1e18; --line:#2e332a; --ink:#e8e6df; --dim:#9aa092;
+    --person:#6fa8dc; --trust:#c27ba0; --entity:#e8a33d; --estate:#e06666;
+    --gov:#7f8c7a; --unknown:#5f6b5a;
+    --agree:#7fbf6a; --disagree:#e0a040; --thin:#5f6b5a; --short:#f2d16b;
+    --g:#7fbf6a; --a:#e0b040; --r:#e06666; --x:#5f6b5a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font:13px/1.45 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+  #map{position:absolute;inset:0}
+  .panel{position:absolute;z-index:5;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  #side{top:12px;left:12px;width:316px;max-height:calc(100% - 24px);
+    display:flex;flex-direction:column;overflow:hidden}
+  #side header{padding:11px 13px;border-bottom:1px solid var(--line)}
+  #side h1{margin:0;font-size:13px;font-weight:650;letter-spacing:.01em}
+  #side .sub{margin-top:3px;color:var(--dim);font-size:11px}
+  .synth{margin-top:7px;padding:4px 7px;border-radius:5px;font-size:11px;
+    background:#2a2414;border:1px solid #5c4a1f;color:#f2d16b}
+  .body{padding:11px 13px;overflow:auto}
+  label{display:block;color:var(--dim);font-size:11px;margin:11px 0 4px;
+    text-transform:uppercase;letter-spacing:.05em}
+  input[type=text],select{width:100%;background:#13160f;color:var(--ink);
+    border:1px solid var(--line);border-radius:5px;padding:7px 8px;font:inherit}
+  input[type=range]{width:100%}
+  .row{display:flex;gap:7px;align-items:center;margin-top:7px}
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;
+    border:1px solid var(--line);border-radius:999px;cursor:pointer;
+    font-size:11px;user-select:none;margin:0 4px 4px 0;background:#13160f}
+  .chip.off{opacity:.33}
+  .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{flex:1;background:#13160f;color:var(--dim);border:0;padding:6px 4px;
+    font:inherit;font-size:11px;cursor:pointer}
+  .seg button.on{background:#2b3324;color:var(--ink)}
+  .sw{width:9px;height:9px;border-radius:2px;display:inline-block}
+  #results{margin-top:7px;max-height:232px;overflow:auto;
+    border:1px solid var(--line);border-radius:5px;display:none}
+  #results div{padding:6px 8px;cursor:pointer;border-bottom:1px solid #23271f}
+  #results div:last-child{border-bottom:0}
+  #results div:hover{background:#222720}
+  #results .nm{font-weight:600}
+  #results .mt{color:var(--dim);font-size:11px}
+  #info{top:12px;right:12px;width:340px;max-height:calc(100% - 24px);
+    overflow:auto;display:none}
+  #info .hd{padding:11px 13px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;gap:9px;align-items:flex-start}
+  #info .nm{font-weight:650;font-size:14px;line-height:1.3}
+  #info .bd{padding:11px 13px}
+  #info x{cursor:pointer;color:var(--dim);font-size:17px;line-height:1}
+  table{width:100%;border-collapse:collapse}
+  td{padding:3px 0;vertical-align:top}
+  td:first-child{color:var(--dim);width:44%;padding-right:9px}
+  .tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;
+    font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:#11130f;margin-right:3px}
+  h4{margin:12px 0 5px;padding-top:9px;border-top:1px solid var(--line);font-size:11px;
+    color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+  .p1{padding:4px 0;border-bottom:1px solid #23271f}
+  .p1:last-child{border-bottom:0}
+  .p1 b{font-weight:600}
+  .p1 span{display:block;color:var(--dim);font-size:11px}
+  .warn{margin-top:9px;padding:6px 8px;border-radius:5px;
+    background:#3a2a16;border:1px solid #5c431f;font-size:11px}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .val{display:grid;grid-template-columns:1fr auto;gap:2px 9px}
+  .val .k{color:var(--dim)}
+  .val .v{text-align:right;font-variant-numeric:tabular-nums}
+  #legend{bottom:12px;left:12px;padding:9px 11px;min-width:150px}
+  #legend b{display:block;margin-bottom:6px;font-size:11px;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.05em}
+  #legend div{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11px}
+  #funnel{bottom:44px;right:56px;padding:9px 11px;width:330px;font-size:11px}
+  #funnel b{display:block;margin-bottom:5px;font-size:11px;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.05em}
+  #funnel .f{display:grid;grid-template-columns:44px 40px 1fr;gap:6px;padding:1px 0}
+  #funnel .n{text-align:right;font-variant-numeric:tabular-nums}
+  #funnel .c{text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+  #stat{bottom:12px;right:12px;padding:7px 11px;color:var(--dim);font-size:11px}
+  .note{color:var(--dim);font-size:11px;margin-top:9px;line-height:1.4}
+  .maplibregl-popup-content{background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:12px}
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:var(--panel)}
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip{border-bottom-color:var(--panel)}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="side" class="panel">
+  <header>
+    <h1>Farmland acquisition map</h1>
+    <div class="sub" id="sub">loading&hellip;</div>
+    <div class="synth" id="synth" style="display:none">Synthetic sample. Every owner, parcel, sale and
+      registry record here is generated; none is real.</div>
+  </header>
+  <div class="body">
+    <label for="q">Search owner, person behind an LLC, or address</label>
+    <input id="q" type="text" placeholder="Example Prairie, Quillby, trust&hellip;" autocomplete="off">
+    <div id="results"></div>
+
+    <label>Color by</label>
+    <div class="seg" id="mode">
+      <button data-m="otype" class="on">Owner type</button>
+      <button data-m="value">Valuation</button>
+      <button data-m="short">Shortlist</button>
+    </div>
+
+    <label>Owner type</label>
+    <div id="types"></div>
+
+    <label for="minac">Minimum acres <span id="minacv">0</span></label>
+    <input id="minac" type="range" min="0" max="320" step="10" value="0">
+
+    <label for="cty">County</label>
+    <select id="cty"><option value="">All counties</option></select>
+
+    <div class="row"><input type="checkbox" id="short"><label for="short" style="margin:0">Shortlist only (eight default tests)</label></div>
+    <div class="row"><input type="checkbox" id="abs"><label for="abs" style="margin:0">Absentee: every LLC manager out of state</label></div>
+    <div class="row"><input type="checkbox" id="haspp"><label for="haspp" style="margin:0">LLC traced to named people</label></div>
+
+    <div class="note">Click a parcel for owner, footprint, the people behind an LLC, three
+      valuations and the scorecard. Acres are parcel acres, not tillable cropland.</div>
+  </div>
+</div>
+
+<div id="info" class="panel">
+  <div class="hd">
+    <div><div class="nm" id="i_owner"></div><div id="i_tag" style="margin-top:5px"></div></div>
+    <x id="i_close">&times;</x>
+  </div>
+  <div class="bd" id="i_body"></div>
+</div>
+
+<div id="legend" class="panel"></div>
+<div id="funnel" class="panel" style="display:none"></div>
+<div id="stat" class="panel">loading&hellip;</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<script src="scorecard.js"></script>
+<script>
+// Absolute URL: MapLibre fetches GeoJSON from a web worker, where a relative path does not resolve.
+const DATA = new URL('../build/map/', location.href).href;
+const TYPES = [
+  ['person','Individual','--person'], ['trust','Trust','--trust'],
+  ['entity','LLC / company','--entity'], ['estate','Estate / heirs','--estate'],
+  ['government','Government','--gov'], ['unknown','Unknown','--unknown'],
+];
+const active = new Set(TYPES.map(t => t[0]));
+active.delete('government');                 // not acquisition targets; off by default
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v, d = 0) => v == null ? '—' : (+v).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+const usd = v => v == null ? '—' : '$' + fmt(v);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let META = null, OWNERS = [], mode = 'otype';
+
+const COLORS = {
+  otype: () => ['match', ['get','otype'], 'person', cssv('--person'), 'trust', cssv('--trust'),
+    'entity', cssv('--entity'), 'estate', cssv('--estate'), 'government', cssv('--gov'), cssv('--unknown')],
+  value: () => ['match', ['get','v_status'], 'agree', cssv('--agree'), 'disagree', cssv('--disagree'), cssv('--thin')],
+  short: () => ['case', ['==', ['get','short'], 1], cssv('--short'), '#3a4034'],
+};
+const LEGENDS = {
+  otype: ['Owner type', [['--person','Individual'],['--trust','Trust'],['--entity','LLC / company'],['--estate','Estate / heirs'],['--gov','Government']]],
+  value: ['Three valuations', [['--agree','Agree within 20%'],['--disagree','Disagree: look harder'],['--thin','Too few sales']]],
+  short: ['Default screen', [['--short','Clears all eight tests'],['--x','Fails at least one']]],
+};
+
+async function boot(){
+  META = await (await fetch(DATA + 'meta.json')).json();
+  OWNERS = await (await fetch(DATA + 'owners.json')).json();
+  document.getElementById('sub').textContent =
+    `${fmt(META.on_map)} farm parcels · ${fmt(META.acres_on_map)} acres · ${META.counties.length} counties · ${fmt(META.owners)} owners`;
+  if (META.synthetic) document.getElementById('synth').style.display = 'block';
+  const cty = document.getElementById('cty');
+  META.counties.forEach(c => cty.insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+  renderFunnel();
+
+  let src;
+  if (META.tiles === 'pmtiles') {
+    const proto = new pmtiles.Protocol();
+    maplibregl.addProtocol('pmtiles', proto.tile);
+    src = { type: 'vector', url: 'pmtiles://' + DATA + 'parcels.pmtiles' };
+  } else {
+    src = { type: 'geojson', data: DATA + 'parcels.geojson' };
+  }
+  const L = META.tiles === 'pmtiles' ? {'source-layer': 'parcels'} : {};
+  window.map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      version: 8,
+      sources: {
+        osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+               tileSize: 256, maxzoom: 19, attribution: '&copy; OpenStreetMap contributors' },
+        parcels: src,
+      },
+      layers: [
+        { id:'osm', type:'raster', source:'osm',
+          paint:{ 'raster-opacity':0.38, 'raster-saturation':-0.6, 'raster-brightness-max':0.8 } },
+        { id:'fill', type:'fill', source:'parcels', ...L,
+          paint:{ 'fill-color':COLORS.otype(), 'fill-opacity':['interpolate',['linear'],['zoom'],9,0.6,14,0.45] } },
+        { id:'line', type:'line', source:'parcels', ...L, minzoom: 10.5,
+          paint:{ 'line-color':'#0c0e0a', 'line-width':['interpolate',['linear'],['zoom'],11,0.3,15,0.9], 'line-opacity':0.7 } },
+        { id:'same', type:'fill', source:'parcels', ...L,
+          paint:{ 'fill-color':'#ffffff','fill-opacity':0.22 }, filter:['==',['get','oi'],-1] },
+        { id:'hl', type:'line', source:'parcels', ...L,
+          paint:{ 'line-color':'#ffffff','line-width':2.4 }, filter:['==',['get','pin'],'___none___'] },
+      ]
+    },
+    center: META.center, zoom: 10.3, maxZoom: 16,
+  });
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}), 'bottom-right');
+  map.addControl(new maplibregl.ScaleControl({unit:'imperial'}), 'bottom-right');
+  // Deep link: #mode=value&pin=01-07-03-0123 opens a view and a parcel.
+  const H = new URLSearchParams(location.hash.slice(1));
+  map.on('load', () => {
+    const B = OWNERS.reduce((b, o) => [Math.min(b[0], o.b[0]), Math.min(b[1], o.b[1]), Math.max(b[2], o.b[2]), Math.max(b[3], o.b[3])], [180, 90, -180, -90]);
+    if (!H.get('pin')) map.fitBounds([[B[0], B[1]], [B[2], B[3]]], {padding: {top: 30, bottom: 30, left: 350, right: 30}, duration: 0});
+    applyFilter();
+    setMode(LEGENDS[H.get('mode')] ? H.get('mode') : 'otype');
+    const openPin = () => {
+      const f = map.querySourceFeatures('parcels', {filter: ['==', ['get','pin'], H.get('pin')]})[0];
+      if (!f) return;
+      map.off('idle', openPin);
+      map.off('sourcedata', openPin);
+      showParcel(f.properties);
+      map.setFilter('hl', ['==',['get','pin'], f.properties.pin]);
+      map.setFilter('same', ['==',['get','oi'], +f.properties.oi]);
+      const c = f.geometry.coordinates[0];
+      map.jumpTo({center: [c.reduce((s, p) => s + p[0], 0) / c.length, c.reduce((s, p) => s + p[1], 0) / c.length],
+                  zoom: +(H.get('z') || 12.6)});
+    };
+    if (H.get('pin')) { map.on('idle', openPin); map.on('sourcedata', openPin); openPin(); }
+  });
+  map.on('idle', () => { document.getElementById('stat').textContent = 'ready'; });
+  wire();
+}
+
+function renderFunnel(){
+  const f = META.funnel, el = document.getElementById('funnel');
+  el.innerHTML = `<b>Default screen, chained</b>` + f.map(r =>
+    `<div class="f"><span class="n">${fmt(r.remaining)}</span><span class="c">${r.cut == null ? '' : fmt(r.cut)}</span><span>${esc(r.test)}</span></div>`).join('') +
+    `<div class="note" style="margin-top:6px">${fmt(META.shortlist.parcels)} parcels, ${fmt(META.shortlist.acres)} acres, ${fmt(META.shortlist.owners)} owners clear all eight.</div>`;
+}
+
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  map.setPaintProperty('fill', 'fill-color', COLORS[m]());
+  const [title, items] = LEGENDS[m];
+  document.getElementById('legend').innerHTML = `<b>${title}</b>` +
+    items.map(([v, t]) => `<div><i class="sw" style="background:${cssv(v)}"></i>${t}</div>`).join('');
+  document.getElementById('funnel').style.display = m === 'short' ? 'block' : 'none';
+}
+
+function applyFilter(){
+  const f = ['all', ['in', ['get','otype'], ['literal', [...active]]]];
+  const minac = +document.getElementById('minac').value;
+  if (minac > 0) f.push(['>=', ['to-number', ['coalesce', ['get','acres'], 0]], minac]);
+  const cty = document.getElementById('cty').value;
+  if (cty) f.push(['==', ['get','county'], cty]);
+  if (document.getElementById('short').checked) f.push(['==', ['get','short'], 1]);
+  if (document.getElementById('abs').checked) f.push(['==', ['get','absentee'], 1]);
+  if (document.getElementById('haspp').checked) f.push(['has','people']);
+  map.setFilter('fill', f);
+  map.setFilter('line', f);
+}
+
+function wire(){
+  const typesEl = document.getElementById('types');
+  TYPES.forEach(([k, label, v]) => {
+    const c = document.createElement('span');
+    c.className = 'chip' + (active.has(k) ? '' : ' off');
+    c.innerHTML = `<i class="sw" style="background:${cssv(v)}"></i>${label}`;
+    c.onclick = () => { active.has(k) ? active.delete(k) : active.add(k); c.classList.toggle('off'); applyFilter(); };
+    typesEl.appendChild(c);
+  });
+  ['minac','abs','haspp','cty','short'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+    document.getElementById('minacv').textContent = document.getElementById('minac').value;
+    applyFilter();
+  }));
+  document.querySelectorAll('#mode button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+  document.getElementById('i_close').onclick = () => {
+    document.getElementById('info').style.display = 'none';
+    map.setFilter('hl', ['==',['get','pin'],'___none___']);
+    map.setFilter('same', ['==',['get','oi'],-1]);
+  };
+  map.on('click', 'fill', e => {
+    const p = e.features && e.features[0] && e.features[0].properties;
+    if (!p) return;
+    showParcel(p);
+    map.setFilter('hl', ['==',['get','pin'], p.pin]);
+    map.setFilter('same', ['==',['get','oi'], +p.oi]);
+  });
+  const pop = new maplibregl.Popup({closeButton:false, closeOnClick:false, offset:8});
+  map.on('mousemove', 'fill', e => {
+    const p = e.features[0].properties;
+    map.getCanvas().style.cursor = 'pointer';
+    pop.setLngLat(e.lngLat).setHTML(`<b>${esc(p.owner)}</b><br>${fmt(p.acres, 1)} ac · ${esc(p.county)}`).addTo(map);
+  });
+  map.on('mouseleave', 'fill', () => { map.getCanvas().style.cursor = ''; pop.remove(); });
+
+  let t;
+  const q = document.getElementById('q'), resEl = document.getElementById('results');
+  q.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const s = q.value.trim().toUpperCase();
+      if (s.length < 3) { resEl.style.display = 'none'; return; }
+      const hits = OWNERS.filter(o => o.n.toUpperCase().includes(s) || (o.v && o.v.toUpperCase().includes(s)) ||
+        (o.ppl && o.ppl.toUpperCase().includes(s)) || (o.pa && o.pa.toUpperCase().includes(s))).slice(0, 60);
+      resEl.innerHTML = hits.length ? hits.map((o, i) => `<div data-i="${i}">
+          <div class="nm">${esc(o.n)}</div>
+          <div class="mt">${fmt(o.a)} ac · ${o.p} parcels · ${o.c.map(esc).join(', ')}${o.ab ? ' · absentee' : ''}</div>
+          ${o.v ? `<div class="mt">also written: ${esc(o.v)}</div>` : ''}
+          ${o.ppl ? `<div class="mt" style="color:#8fbf7a">${esc(o.ppl)}</div>` : ''}</div>`).join('')
+        : `<div class="mt" style="padding:7px 9px">no match</div>`;
+      resEl.style.display = 'block';
+      resEl.querySelectorAll('div[data-i]').forEach(el => el.onclick = () => {
+        const o = hits[+el.dataset.i];
+        map.fitBounds([[o.b[0], o.b[1]], [o.b[2], o.b[3]]], {padding: 120, maxZoom: 14, duration: 900});
+        map.setFilter('same', ['==',['get','oi'], o.oi]);
+        resEl.style.display = 'none';
+      });
+    }, 150);
+  });
+}
+
+const TAGBG = {person:'--person', trust:'--trust', entity:'--entity', estate:'--estate', government:'--gov'};
+const BASIS = {assessor_crop:'assessor crop acres', assessor_farm:'assessor farm class', satellite_crop:'satellite crop history', size_only:'size only'};
+const NOT_IN_SAMPLE = new Set(['drain_poor','tiled','tax_share','weather','income']);
+
+function showParcel(p){
+  document.getElementById('i_owner').textContent = p.owner || '(no owner recorded)';
+  const t = p.otype || 'unknown';
+  document.getElementById('i_tag').innerHTML =
+    `<span class="tag" style="background:${cssv(TAGBG[t] || '--unknown')}">${t}</span>` +
+    (p.absentee == 1 ? `<span class="tag" style="background:#e8a33d">absentee</span>` : '') +
+    (p.short == 1 ? `<span class="tag" style="background:var(--short)">shortlist</span>` : '');
+
+  const rows = [
+    ['County', p.county], ['Parcel number', p.pin], ['Parcel acres', fmt(p.acres, 1)],
+    ['Farm because', BASIS[p.basis] || p.basis], ['Assessor class', p['class'] || '—'],
+    ['This owner holds', `${fmt(p.o_ac)} ac · ${p.o_par} parcels · ${p.o_cty} ${p.o_cty == 1 ? 'county' : 'counties'}`],
+    ['Last sale', p.last_sale ? `${p.last_sale} · ${usd(p.last_ppa)}/ac${p.auction == 1 ? ' · auction' : ''}` : 'none since 2021'],
+  ];
+  let h = `<table>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${esc(v ?? '—')}</td></tr>`).join('')}</table>`;
+
+  if (p.people) {
+    const names = String(p.people).split(' | '), addrs = String(p.p_addr || '').split(' | ');
+    h += `<h4>Named in the state LLC registry</h4>` +
+      names.map((n, i) => `<div class="p1"><b>${esc(n)}</b><span>${esc(addrs[i] || '')}</span></div>`).join('') +
+      (p.mgr_st ? `<div class="note">Manager states: ${esc(p.mgr_st)}</div>` : '');
+  } else if (p.ambiguous == 1) {
+    h += `<div class="warn">This name matches two registry file numbers. The bulk file carries no status,
+      so the platform does not guess which LLC holds the land and lists no one.</div>`;
+  } else if (t === 'trust') {
+    h += `<div class="warn">Trust. Most trust-held farmland names a trustee on the deed, so that owner is
+      reachable. A bank-held Illinois land trust is the exception: state law keeps the beneficiary off the
+      public record.</div>`;
+  } else if (t === 'entity') {
+    h += `<div class="warn">No match in the state LLC registry. It may be registered in another state,
+      dissolved, or spelled differently on the tax roll.</div>`;
+  }
+
+  const vs = p.v_status;
+  h += `<h4>Three valuations, $/acre</h4><div class="val">
+    <span class="k">Comparable sales (${p.v_n ?? 0})</span><span class="v">${usd(p.v_comps)}</span>
+    <span class="k">Soil productivity</span><span class="v">${usd(p.v_soil)}</span>
+    <span class="k">Rent capitalization</span><span class="v">${usd(p.v_rent)}</span>
+    <span class="k">Verdict</span><span class="v"><i class="dot" style="background:${cssv('--' + (vs || 'thin'))}"></i>${
+      vs === 'agree' ? `${usd(p.v_lo)} to ${usd(p.v_hi)}` : vs === 'disagree' ? 'disagree: look harder' : 'too few sales'}</span>
+  </div>`;
+
+  const detail = {
+    pi: p.pi, acres: p.acres, rent: p.rent,
+    crop: { tillable: p.till != null && p.acres ? p.till * p.acres : null },
+    water: { sfha: p.flood ?? null, no_flood_map: p.flood == null, wetland: p.wet,
+             landlocked: p.road == null ? null : p.road == 0, elevator_mi: p.elev_mi },
+    price: { guess_status: vs, guess_lo_ac: p.v_lo, guess_hi_ac: p.v_hi, comps_n: p.v_n },
+  };
+  const sc = Scorecard.rows(detail, p, { pi: META.county_pi[p.county] }).filter(r => !NOT_IN_SAMPLE.has(r.key));
+  h += `<h4>Scorecard</h4><table>` + sc.map(r =>
+    `<tr><td><i class="dot" style="background:var(--${r.color})"></i>${esc(r.label)}</td><td>${esc(r.value)}</td></tr>`).join('') +
+    `</table><div class="note">Thresholds are defaults the buyer can change. Grey means no data, never a fail.
+    Five more tests in the full build (drainage, tile, tax, weather, income) are not in the sample.</div>`;
+
+  document.getElementById('i_body').innerHTML = h;
+  document.getElementById('info').style.display = 'block';
+}
+
+boot();
+</script>
+</body>
+</html>
