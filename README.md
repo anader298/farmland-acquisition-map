@@ -1,5 +1,7 @@
 # Farmland acquisition map
 
+[![tests](https://github.com/anader298/farmland-acquisition-map/actions/workflows/test.yml/badge.svg)](https://github.com/anader298/farmland-acquisition-map/actions/workflows/test.yml)
+
 An acquisition intelligence platform that identifies, values, screens and prioritizes farmland before it reaches the market, built entirely from free public records.
 
 ![Parcel detail: owner, the people behind the LLC, three valuations and the scorecard](docs/map-parcel-detail.png)
@@ -145,7 +147,7 @@ No model or API call runs at run time.
 
 - **Playbook or agent, and why.** A playbook. The steps never change and a buyer must get the same numbers on a rerun, so an agent choosing steps would only add variance.
 - **How it was built.** On 29 Oct a build silently dropped five counties while the state total still looked right. The private build now checks downloads by object id.
-- **How it's checked.** 9 unit tests (`python -m unittest discover tests`). On the 9 Nov build, comparable sales missed real prices by a median 22.6% against a 15% target, so the values are a screen. CI on every push is next.
+- **How it's checked.** 9 unit tests (`python -m unittest discover tests`). On the 9 Nov build, comparable sales missed real prices by a median 22.6% against a 15% target, so the values are a screen. GitHub Actions runs the tests and a full sample build on every push.
 - **Limits.** The hold-out has no time split, the rent value shares its sales with the comps, "agree" fires with two methods, and fetch and normalize use different count tolerances. Planned fixes: a time-split test, a clearer label, and one tolerance policy. See [Where it breaks](#where-it-breaks).
 
 How I build with AI: [github.com/anader298/how-i-build-with-ai](https://github.com/anader298/how-i-build-with-ai)
