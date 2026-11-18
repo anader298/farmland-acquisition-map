@@ -128,6 +128,28 @@ The map opens a parcel from the URL: `http://127.0.0.1:8787/web/#pin=01-53-03-03
 The full write-up, with the method, exhibits and limits: <https://dandoungroup.com/case-studies/#farmland>
 
 
+## Methodology
+
+Use: Screen, with analysis underneath. Lever: buy-side sourcing and price discipline. It finds owners worth approaching before land reaches market and flags thinly supported prices, saving screening time and lowering the risk of overpaying.
+
+| Step | Done by | Check |
+|---|---|---|
+| Find 1,195 public sources; map county fields | Agents at build time, reviewed by a person | Build stops if a county's rows differ from its manifest |
+| Download parcels | Code (`pipeline/fetch_parcels.py`) | Count vs the county's published total; short counties retried |
+| Farm rule, owner types, LLC join | Code; a person wrote the farm rule | 18-case self-test, `test_types`, `test_join` |
+| Merge owner names | Code; a person set the rules | Every merge and refusal logged with its reason |
+| Value three ways, then screen | Code; the buyer sets thresholds | Hold-out miss printed on every build |
+| Choose owners to approach | Person | Outside the tool |
+
+No model or API call runs at run time.
+
+- **Playbook or agent, and why.** A playbook. The steps never change and a buyer must get the same numbers on a rerun, so an agent choosing steps would only add variance.
+- **How it was built.** On 29 Oct a build silently dropped five counties while the state total still looked right. The private build now checks downloads by object id.
+- **How it's checked.** 9 unit tests (`python -m unittest discover tests`). On the 9 Nov build, comparable sales missed real prices by a median 22.6% against a 15% target, so the values are a screen. CI on every push is next.
+- **Limits.** The hold-out has no time split, the rent value shares its sales with the comps, "agree" fires with two methods, and fetch and normalize use different count tolerances. Planned fixes: a time-split test, a clearer label, and one tolerance policy. See [Where it breaks](#where-it-breaks).
+
+How I build with AI: [github.com/anader298/how-i-build-with-ai](https://github.com/anader298/how-i-build-with-ai)
+
 ## Author
 
 Anthony Nader. Released under the MIT License.
