@@ -7,6 +7,8 @@ An acquisition intelligence platform that identifies, values, screens and priori
 *All screenshots run on the synthetic sample in this repo. Every owner, parcel, sale and registry record in them is generated.*
 
 > **About this repo.** This is a public snapshot of a private application. The private version runs on real statewide data and is updated continuously: new counties, sources, rules and valuation changes land there first. This copy is fixed at the point it was published. It keeps the core pipeline, the rules and the map, runs them on a synthetic sample, and is not updated alongside the private app.
+>
+> **History.** The private app was built from 28 Oct to 10 Nov 2026 in 84 commits, and that history holds real landowner records and private configuration, so it stays private. This repo is a condensed rewrite of the core rules in plain Python, published as one commit on 11 Nov 2026, and every change since lands as its own commit.
 
 ## The problem
 
@@ -76,7 +78,7 @@ flowchart LR
 
 ## Results
 
-From the full build on real public data:
+From the full build on real public data, 9 Nov 2026 (the snapshot the case study uses):
 
 | | |
 |---|---|
@@ -98,8 +100,8 @@ The synthetic sample produces its own, much smaller funnel (printed by the build
 
 - **Bank-held Illinois land trusts.** State law keeps the beneficiary off the public record, so the platform cannot name who stands behind one. Most trust-held farmland names a trustee on the deed, and that owner is reachable.
 - **Owner matching is careful, not certain.** Matching on name, address and registry filings is not legal entity resolution. One person registered two ways can count twice.
-- **The valuations screen; they do not price a bid.** In hold-out tests, comparable sales miss the real price by a median 22.6% against a 15% target, and 76 of the 80 counties tested carry a low-confidence flag shown on every parcel.
-- **Coverage is uneven.** 21 of Illinois' 102 counties are not on the map yet. Some homes were counted as farmland; the fix is decided but not yet rebuilt.
+- **The valuations screen; they do not price a bid.** In a leave-one-out hold-out, comparable sales miss the real price by a median 22.6% against a 15% target, and 76 of the 80 counties tested carry a low-confidence flag shown on every parcel. Later sales sit in the training pool, so a test on later sales only comes next.
+- **Coverage is uneven.** 21 of Illinois' 102 counties are not on the map yet. The 9 Nov figures count some farm homesites as farmland; the private 10 Nov rebuild fixed this, and `pipeline/farm_rule.py` here still counts class 11 until the same fix lands.
 - **Some sources are off limits.** Sites whose terms bar automated access are never fetched. Their counties show as gaps.
 - **Seller motivation and adjacency scoring are not built yet.** The signals (estate owners, auctions, absentee managers, owner footprint) are on the map; the score that weighs them is not.
 - **This repo is a subset.** It runs the same rules in plain Python on a synthetic three-county sample. The production build adds the DuckDB warehouse, the soil, crop, flood and wetland overlays at state scale, the tax and weather layers and a gated hosted map.
@@ -124,6 +126,7 @@ The map opens a parcel from the URL: `http://127.0.0.1:8787/web/#pin=01-53-03-03
 ## Case study
 
 The full write-up, with the method, exhibits and limits: <https://dandoungroup.com/case-studies/#farmland>
+
 
 ## Author
 
