@@ -34,9 +34,13 @@ The answers are public, but they are scattered across county assessors, the stat
 - **Screens and ranks** with a scorecard of plain tests (soil, tillable share, flood, wetland, road, elevator distance, size, price agreement, rent yield). Thresholds are the buyer's to set. Missing data shows grey, never as a fail.
 - **Shows its gaps.** A missing source is a visible gap on the map, not a guess.
 
-| Shortlist view: parcels that clear eight default tests | Valuation view: where the three methods agree or split |
-|---|---|
-| ![Shortlist](docs/map-shortlist.png) | ![Valuation](docs/map-valuation.png) |
+**Shortlist view.** Parcels that clear eight default tests.
+
+![Shortlist view: parcels that clear eight default tests](docs/map-shortlist.png)
+
+**Valuation view.** Where the three methods agree or split.
+
+![Valuation view: where the three methods agree or split](docs/map-valuation.png)
 
 ## How it works
 
